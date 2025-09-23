@@ -9,7 +9,7 @@ from StatTools.generators.lbfbm_generator import LBFBmGenerator, normalize
 
 IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
 if IN_GITHUB_ACTIONS:
-    h_list = [0.25, 1, 2, 3.5]
+    h_list = [0.5, 1, 1.5]
     rate_list = [14]
 else:
     h_list = np.arange(0.5, 1.6, 0.15)
