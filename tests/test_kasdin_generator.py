@@ -1,11 +1,20 @@
+import os
+
 import numpy as np
 import pytest
 
-from StatTools.analysis.dfa import DFA
-from StatTools.generators.kasdin_generator import KasdinGenerator
+from StatTools.experimental.analysis.tools import get_extra_h_dfa
+from StatTools.generators.kasdin_generator import create_kasdin_generator
+
+is_ci = os.getenv("CI") == "true"
+
+if is_ci:
+    h_list = [0.25, 1, 2, 3.5]
+else:
+    h_list = np.arange(0.25, 3.75, 0.25)
 
 testdata = {
-    "h_list": np.arange(0.5, 3.75, 0.25),
+    "h_list": h_list,
     "rate_list": [14],
 }
 
@@ -24,12 +33,11 @@ def get_test_h(h: float, target_len: int, filter_coefficients_length: int) -> fl
     Returns:
         Calculated Hurst exponent (h_gen)
     """
-    generator = KasdinGenerator(
+    generator = create_kasdin_generator(
         h, length=target_len, filter_coefficients_length=filter_coefficients_length
     )
     signal = generator.get_full_sequence()
-    dfa = DFA(signal)
-    return dfa.find_h()
+    return get_extra_h_dfa(signal)
 
 
 @pytest.mark.parametrize("h", testdata["h_list"])
