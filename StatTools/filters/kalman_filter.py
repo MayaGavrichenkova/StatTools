@@ -3,10 +3,15 @@ from filterpy.kalman import KalmanFilter
 from numpy.typing import NDArray
 
 from StatTools.analysis.dfa import DFA
-from StatTools.generators.kasdin_generator import KasdinGenerator
+from StatTools.experimental.analysis.tools import get_extra_h_dfa
+from StatTools.filters.symbolic_kalman import (
+    get_sympy_filter_matrix,
+    refine_filter_matrix,
+)
+from StatTools.generators.kasdin_generator import create_kasdin_generator
 
 
-class EnhancedKalmanFilter(KalmanFilter):
+class FractalKalmanFilter(KalmanFilter):
     """
     Advanced Kalman filter with automatic parameter estimation.
 
@@ -22,10 +27,10 @@ class EnhancedKalmanFilter(KalmanFilter):
     Basic usage:
         ```python
         import numpy as np
-        from StatTools.filters.kalman_filter import EnhancedKalmanFilter
+        from StatTools.filters.kalman_filter import FractalKalmanFilter
 
         # Create enhanced Kalman filter
-        kf = EnhancedKalmanFilter(dim_x=2, dim_z=1)
+        kf = FractalKalmanFilter(dim_x=2, dim_z=1)
 
         # Auto-configure using signal characteristics
         kf.auto_configure(
@@ -49,7 +54,7 @@ class EnhancedKalmanFilter(KalmanFilter):
         Automatically estimates Hurst exponent and AR coefficients from data.
     """
 
-    def get_R(self, signal: NDArray[np.float64]) -> NDArray[np.float64]:
+    def eval_R(self, signal: NDArray[np.float64]) -> NDArray[np.float64]:
         """
         Calculate measurement covariance matrix (R) from signal statistics.
 
@@ -61,14 +66,9 @@ class EnhancedKalmanFilter(KalmanFilter):
             signal (NDArray[np.float64]): Input signal representing measurement noise
 
         Returns:
-            NDArray[np.float64]: 1x1 covariance matrix R representing measurement uncertainty
-
-        Note:
-            Assumes measurement noise is white and Gaussian with variance equal
-            to the signal's variance. For more sophisticated noise modeling,
-            consider using more advanced noise estimation techniques.
+            NDArray[np.float64]: A 1x1 dimension covariance matrix R
         """
-        return np.std(signal) ** 2
+        raise NotImplementedError()
 
     def _get_filter_coefficients(
         self, signal: NDArray[np.float64]
@@ -92,12 +92,12 @@ class EnhancedKalmanFilter(KalmanFilter):
         """
         dfa = DFA(signal)
         h = dfa.find_h()
-        generator = KasdinGenerator(h, length=signal.shape[0])
+        generator = create_kasdin_generator(h, length=signal.shape[0])
         return generator.get_filter_coefficients()
 
-    def get_F(
-        self, signal: NDArray[np.float64], dt: float, order: int = 2
-    ) -> NDArray[np.float64]:
+    def get_filter_matrix(
+        self, order: int, model_h: np.array, length: int, dt: float = 1.0
+    ):
         """
         Calculate state transition matrix (F) based on signal characteristics.
 
@@ -123,69 +123,54 @@ class EnhancedKalmanFilter(KalmanFilter):
 
             The matrix coefficients are derived from autoregressive parameters
             estimated from the signal's fractal properties.
-        """
-        dfa = DFA(signal)
-        h = dfa.find_h()
-        generator = KasdinGenerator(h, length=signal.shape[0])
-        A = generator.get_filter_coefficients()
 
+        """
+        generator = create_kasdin_generator(model_h, length=length)
+        ar_filter = generator.get_filter_coefficients()
         if order == 1:
             # Simple position-velocity model
-            return np.array([[1, dt], [0, 1]])
-
-        if order == 2:
-            # Position-velocity-acceleration model
-            return np.array(
-                [[-A[1] - A[2], A[2] * dt], [(-1 - A[1] - A[2]) / dt, A[2]]]
-            )
-
-        if order == 3:
-            # Higher order dynamics model
-            return np.array(
-                [
-                    [-A[1] - A[2] - A[3], A[2] + 2 * A[3], -A[3]],
-                    [-1 - A[1] - A[2] - A[3], A[2] + 2 * A[3], -A[3]],
-                    [-1 - A[1] - A[2] - A[3], -1 + A[2] + 2 * A[3], -A[3]],
-                ]
-            )
-
-        raise ValueError(f"Order {order} is not supported")
+            return np.array([[1]])
+        number_matrix = refine_filter_matrix(
+            get_sympy_filter_matrix(order), order, ar_filter
+        )
+        return np.array(number_matrix, dtype=np.float64)
 
     def auto_configure(
         self,
         signal: NDArray[np.float64],
         noise: NDArray[np.float64],
-        dt: float,
-        order: int = 2,
+        dt: float = 1.0,
+        order: int = None,
     ):
         """
-        Automatically configure Kalman filter parameters from data.
+        TODO: implement dt
+        Automatically adjusts R, F based on the input data.
 
-        Performs complete automatic setup of the Kalman filter by analyzing
-        the input signal and noise characteristics. Estimates both the
-        transition matrix (F) and measurement covariance (R) from the data.
-
-        Args:
-            signal (NDArray[np.float64]): Clean reference signal for system modeling
-            noise (NDArray[np.float64]): Noise signal for measurement uncertainty estimation
-            dt (float): Time step between measurements
-            order (int): System dynamics order (1, 2, or 3)
-
-        Note:
-            This method automatically sets:
-            - F: State transition matrix (from signal analysis)
-            - R: Measurement covariance matrix (from noise analysis)
-
-            Process noise matrix Q should be set separately based on
-            application requirements.
-
-        Example:
-            ```python
-            kf = EnhancedKalmanFilter(dim_x=2, dim_z=1)
-            kf.auto_configure(signal, noise, dt=0.01, order=2)
-            kf.Q = np.eye(2) * 0.1  # Set process noise manually
-            ```
+        Parameters:
+            signal (NDArray[np.float64]): Original signal
+            noise (NDArray[np.float64]): Noise signal
+            dt (float): Time interval between measurements
+            ar_vector(NDArray[np.float64]): Autoregressive filter coefficients
         """
         # TODO: add Q matrix auto configuration
-        self.R = self.get_R(noise)
-        self.F = self.get_F(signal, dt, order)
+        self.H[0][0] = 1.0
+        model_h = get_extra_h_dfa(signal)
+        noise_var = np.std(noise) ** 2
+        kasdin_lenght = len(signal)
+        self.set_parameters(model_h, noise_var, kasdin_lenght, dt, order)
+
+    def set_parameters(
+        self,
+        model_h,
+        noise_var: float | list[float],
+        kasdin_lenght: int,
+        dt: float = 1,
+        order: int = None,
+    ):
+        if order is None:
+            order = self.dim_x
+        if isinstance(noise_var, list):
+            raise NotImplementedError("Only for 1d data")
+        self.H[0][0] = 1.0
+        self.R = noise_var
+        self.F = self.get_filter_matrix(order, model_h, kasdin_lenght, dt)
