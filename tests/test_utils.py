@@ -16,7 +16,7 @@ def test_two_slopes_utils():
     ff = 10 ** single_cross_fcn(np.log10(tst_s), 0, np.log10(cross_theor), h1, h2, 5)
     tst_hr = 1 + np.random.normal(0, 0.3, (20, len(ff)))
     tst_hr *= ff
-    dfa_params, _ = analyse_ff(tst_hr, tst_s)
-    assert dfa_params.slope_l.value == pytest.approx(h1, abs=0.2)
-    assert dfa_params.slope_h.value == pytest.approx(h2, abs=0.2)
-    assert dfa_params.cross.value == pytest.approx(cross_theor, rel=0.3)
+    ff_params, _ = analyse_ff(tst_hr, tst_s)
+    assert ff_params.slope_l.value == pytest.approx(h1, abs=0.2)
+    assert ff_params.slope_h.value == pytest.approx(h2, abs=0.2)
+    assert ff_params.cross.value == pytest.approx(cross_theor, rel=0.3)

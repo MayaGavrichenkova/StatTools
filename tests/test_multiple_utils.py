@@ -20,9 +20,9 @@ def test_multiple_crossovers_utils():
     )
     tst_hr = 1 + np.random.normal(0, 0.3, (20, len(ff)))
     tst_hr *= ff
-    dfa_multiple_params, _ = analyse_multiple_cross_ff(tst_hr, tst_s)
+    ff_multiple_params, _ = analyse_multiple_cross_ff(tst_hr, tst_s)
     assert_allclose(
-        dfa_multiple_params.multiple_slope_current.multiple_value,
+        ff_multiple_params.multiple_slope_current.multiple_value,
         slope_ij,
         rtol=0.1,
         atol=0.3,
