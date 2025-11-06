@@ -15,7 +15,10 @@ def test_multiple_crossovers_utils():
     tst_s = np.array(
         [0.01, 0.1, 0.3, 0.5, 1, 1.5, 2.5, 5, 7.5, 10, 15, 20, 50, 100, 250, 500, 1000]
     )
-
+    """
+    Test function which can be used as base element for fluctuation characteristic approximation with several Hurst
+    coefficients with signals of known Hurst exponent.
+    """
     ff = 10 ** cross_fcn_sloped(
         np.log10(tst_s),
         0,

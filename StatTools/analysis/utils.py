@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from functools import partial
 
-import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
 
@@ -23,6 +22,19 @@ class ff_params:
 
 
 def cross_fcn_sloped(x, y_0, *args, crossover_amount: int):
+    """
+    Function which can be used as base element for fluctuation characteristic approximation with several Hurst
+    coefficients with levelling ...........????????????
+
+    Args:
+      x(Union[int, Iterable]): points where  fluctuation function F(s) is calculated.
+      y_0(int): y-intecept for function.
+      *args: Variable length argument list.
+      crossover_amount(int): value of points where the Hurst coefficient has changed.
+
+    Returns:
+      float: The return value of function with current input values.
+    """
     crossovers = crossover_amount
     slopes = crossover_amount + 1
     C = args[:crossovers]
@@ -55,7 +67,7 @@ def analyse_cross_ff(
     S: np.ndarray,
     max_ridigity: float = +np.inf,
     min_ridigity: int = 1,
-    max_intercept: int = +np.inf,
+    max_intercept: float = +np.inf,
     min_intercept: float = -np.inf,
     min_slope_current: int = 0,
     min_slope_current_1: int = 0,
@@ -70,7 +82,49 @@ def analyse_cross_ff(
     max_ridigity_1: float = +np.inf,
 ):
     """
-    Analyses real data: F(s) and s and simulated data with linear regression's model.
+    Function where running fluctuation characteristic approximation with several Hurst
+    coefficients. It let us receive parameters of fluctuation function after approximation and errors that can be calculated
+    as diagonal elements of covariation matrix.
+
+    Args:
+      hs(array): The independent (k,M) shape-array variable where data is measured.
+      S(array): The dependent data M-length array.
+      max_ridigity(float): maximum value of coefficient which is proportonal to sharpness (rigidity) of a DFA crossover
+      for bounds of approximation.
+      min_ridigity(int): minimum value of coefficient which is proportonal to sharpness (rigidity) of a DFA crossover
+      for bounds of approximation.
+      max_intercept(float): maximum value of y-intecept for function for bounds of approximation.
+      min_intercept(float): minimum value of y-intecept for function for bounds of approximation.
+      min_slope_current(int): minimum value of Hurst coefficient for bounds of approximation.
+      min_slope_current_1(int): minimum value of Hurst coefficient for function with several Hurst coefficients for bounds
+      of approximation.
+      max_slope_current(int): maximum value of Hurst coefficient for bounds of approximation.
+      max_slope_current_1(int): maximum value of Hurst coefficient for function with several Hurst coefficients for bounds
+      of approximation.
+      ridigity_initial_parameter(int): initial value of coefficient which is proportonal to sharpness (rigidity) of a DFA crossover
+      for non-linear least squares fitting.
+      ridigity_initial_parameter_1(int): initial value of coefficient which is proportonal to sharpness (rigidity) of a DFA crossover
+      for non-linear least squares fitting for function with several Hurst coefficients.
+      slope_current_initial_parameter(int): initial value of Hurst coefficient for non-linear least squares fitting.
+      slope_current_initial_parameter_1(int): initial value of Hurst coefficient for non-linear least squares fitting of
+      function with several Hurst coefficients.
+      min_ridigity_1(int): minimum value of coefficient which is proportonal to sharpness (rigidity) of a DFA crossover
+      for bounds of approximation for function with several Hurst coefficients.
+      max_ridigity(float): maximum value of coefficient which is proportonal to sharpness (rigidity) of a DFA crossover
+      for bounds of approximation for function with several Hurst coefficients.
+
+    Returns:
+        tuple[float, float, float, float, float, float, float, float]: [itercept, cross, slope_current, ridigity,
+        intercept residuals , cross residuals, slope_current residuals, ridigity residuals], where [itercept, cross, slope_current, ridigity] - parameters
+        of fluctuation function with one crossover, [intercept residuals , cross residuals, slope_current residuals, ridigity residuals] - residuals
+        of parameters that can be calculated as difference between parameters of function afyter fitting and parameters of
+        function with dependent data for function with one crossover.
+
+        tuple[float, float, float, float, float, float, float, float]: [itercept, cross, slope_current, ridigity,
+        intercept residuals , cross residuals, slope_current residuals, ridigity residuals], where [itercept, cross, slope_current, ridigity] - parameters
+        of fluctuation function with several crossovers, [intercept residuals , cross residuals, slope_current residuals, ridigity residuals] - residuals
+        of parameters that can be calculated as difference between parameters of function afyter fitting and parameters of
+        function with dependent data for function with several crossovers.
     """
     hs = hs
     S = S

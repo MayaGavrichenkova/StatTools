@@ -45,7 +45,7 @@ def plot_cross_result():
     plt.show()
 
 
-def analyse_plot_ff(
+def plot_ff(
     hs: np.ndarray,
     S: np.ndarray,
     residuals,

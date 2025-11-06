@@ -1,7 +1,7 @@
 import numpy as np
 
 from StatTools.analysis.utils import analyse_cross_ff, cross_fcn_sloped
-from StatTools.visualization.ff_plot import analyse_plot_ff
+from StatTools.visualization.ff_plot import plot_ff
 
 tst_s = np.array(
     [0.01, 0.1, 0.3, 0.5, 1, 1.5, 2.5, 5, 7.5, 10, 15, 20, 50, 100, 250, 500, 1000]
@@ -32,6 +32,4 @@ tst_h_multiple = 10 ** cross_fcn_sloped(
 tst_hr_multiple = 1 + np.random.lognormal(0, 0.3, (20, len(tst_h_multiple)))
 tst_hr_multiple *= tst_h_multiple
 _, _, _, residuals = analyse_cross_ff(tst_hr_multiple, tst_s)
-analyse_plot_ff(
-    tst_hr_multiple, tst_s, residuals, y_0, r, cross, slope, crossover_amount=2
-)
+plot_ff(tst_hr_multiple, tst_s, residuals, y_0, r, cross, slope, crossover_amount=2)
