@@ -85,48 +85,35 @@ def analyse_cross_ff(
     min_ridigity: float = 1,
     min_slope_current: float = 0,
     max_slope_current: float = 5,
-    ridigity_initial_parameter: float = 5,
+    ridigity_initial_parameter: float = 1,
     slope_current_initial_parameter: float = 1,
 ) -> tuple[ff_params, np.ndarray]:
-    """
-    Function where running fluctuation characteristic approximation with several Hurst
-    coefficients. It let us receive parameters of fluctuation function after approximation and errors that can be calculated
-    as diagonal elements of covariation matrix.
+    """Runs fluctuation characteristic approximation with several Hurst coefficients.
+
+    This function approximates the fluctuation function using multiple Hurst coefficients
+    and returns the fitted parameters along with their standard errors and residuals.
 
     Args:
-      hs(array): The independent (k,M) shape-array variable where data is measured.
-      S(array): The dependent data M-length array.
-      max_ridigity(np.ndarray): maximum value of coefficient which is proportonal to sharpness (rigidity) of a DFA crossover
-      for bounds of approximation.
-      min_ridigity(np.ndarray): minimum value of coefficient which is proportonal to sharpness (rigidity) of a DFA crossover
-      for bounds of approximation.
-      max_intercept(np.ndarray): maximum value of y-intecept for function for bounds of approximation.
-      min_intercept(np.ndarray): minimum value of y-intecept for function for bounds of approximation.
-      min_slope_current(np.ndarray): minimum value of Hurst coefficient for bounds of approximation.
-      max_slope_current(np.ndarray): maximum value of Hurst coefficient for bounds of approximation.
-      ridigity_initial_parameter(np.ndarray): initial value of coefficient which is proportonal to sharpness (rigidity) of a DFA crossover
-      for non-linear least squares fitting.
-      slope_current_initial_parameter(np.ndarray): initial value of Hurst coefficient for non-linear least squares fitting.
-      max_ridigity(np.ndarray): maximum value of coefficient which is proportonal to sharpness (rigidity) of a DFA crossover
-      for bounds of approximation for function with several Hurst coefficients.
+        hs (np.ndarray): The independent variable array of shape (k, M) where data is measured.
+        S (np.ndarray): The dependent data array of length M.
+        crossover_amount (int): The number of crossover points in the fluctuation function.
+        max_ridigity (float, optional): Maximum value of the rigidity coefficient. Defaults to +np.inf.
+        min_ridigity (float, optional): Minimum value of the rigidity coefficient. Defaults to 1.
+        min_slope_current (float, optional): Minimum value of the Hurst coefficient. Defaults to 0.
+        max_slope_current (float, optional): Maximum value of the Hurst coefficient. Defaults to 5.
+        ridigity_initial_parameter (float, optional): Initial value of the rigidity coefficient for fitting. Defaults to 1.
+        slope_current_initial_parameter (float, optional): Initial value of the Hurst coefficient for fitting. Defaults to 1.
 
     Returns:
-        tuple[float, float, float, float,float,float,flooat,float]: [itercept, cross, slope_current, ridigity,
-        intercept residuals , cross residuals, slope_current residuals, ridigity residuals], where [itercept, cross, slope_current, ridigity] - parameters
-        of fluctuation function with one crossover.
-
-        tuple[float, float, float, float, float, float, float, float]: [itercept, cross, slope_current, ridigity,
-        intercept residuals , cross residuals, slope_current residuals, ridigity residuals], where [itercept, cross, slope_current, ridigity] - parameters
-        of fluctuation function with several crossovers, [intercept residuals , cross residuals, slope_current residuals, ridigity residuals] - residuals
-        of parameters that can be calculated as difference between parameters of function afyter fitting and parameters of
-        function with dependent data for function with several crossovers.
+        tuple[ff_params, np.ndarray]: A tuple containing the fitted parameters as an ff_params object
+        and the residuals as a numpy array.
     """
 
     # Initialization of optimization procedure
     # S=S
     # hs=hs
     s = np.repeat(S[:, np.newaxis], hs.shape[0], 1).T
-    change_cross_value = partial(cross_fcn_sloped, crossover_amount=1)
+    change_cross_value = partial(cross_fcn_sloped, crossover_amount=crossover_amount)
     # po = (0, np.log10(S[len(S) // 3]), np.log10(S[2 * len(S) // 3]), 1, 1, 1, 5, 5, 5)
     s_count, r_count = get_number_parameter_by_number_crossovers(crossover_amount)
 
