@@ -4,7 +4,13 @@ from functools import partial
 import numpy as np
 from scipy.optimize import curve_fit
 
-from StatTools.analysis.support_ff import ff_base_appriximation
+from StatTools.analysis.support_ff import (
+    f_fcn,
+    ff_base_appriximation,
+    rev_f_fcn,
+    tf_minus_inf,
+    tf_plus_inf,
+)
 
 
 @dataclass
@@ -19,6 +25,20 @@ class ff_params:
     cross: list[var_estimation]
     slopes: list[var_estimation]
     ridigity: list[var_estimation]
+
+
+def get_number_parameter_by_number_crossovers(n: int) -> tuple[int, int]:
+    """Returns the number of slopes and rigidity parameters for a given number of crossovers.
+
+    Args:
+        n (int): The number of crossovers in the fluctuation function.
+
+    Returns:
+        tuple[int, int]: A tuple containing the amount of slopes and the amount of rigidity (R) parameters.
+    """
+    slopes = n + 1
+    R = n
+    return slopes, R
 
 
 def cross_fcn_sloped(x, y_0, *args, crossover_amount: int):
@@ -37,44 +57,67 @@ def cross_fcn_sloped(x, y_0, *args, crossover_amount: int):
         np.ndarray: The computed function values at the given points.
     """
     crossovers = crossover_amount
-    slopes_num = crossover_amount + 1
+    slopes_num, _ = get_number_parameter_by_number_crossovers(crossover_amount)
     C = args[:crossovers]
     slope = args[crossovers : crossovers + slopes_num]
-    R = args[crossovers + slopes_num : crossovers + 2 * slopes_num]
+    R = args[crossovers + slopes_num :]
 
-    curr_C = None
-    ridigity = None
-    slope_val = None
-    prev_C = -100
-    result_sloped = 0
-    result = np.zeros_like(x, dtype=float)
+    slope_fcn = np.zeros_like(x, dtype=float)
+    fcn_bias = 0
+    # result_sloped = 0
+    # result = np.zeros_like(x, dtype=float)
 
     for index in range(slopes_num):
-        if index < crossovers:
-            curr_C = C[index]
+        if index == 0:
+            left_c = -np.inf
+            left_r = -np.inf
+            # left_c = None
+            # left_r = None
         else:
-            curr_C = 100
-            pass
+            left_c = C[index - 1]
+            left_r = R[index - 1]
+
+        if index == slopes_num - 1:
+            right_c = np.inf
+            right_r = np.inf
+            # right_c = None
+            # right_r = None
+        else:
+            right_c = C[index]
+            right_r = R[index]
         slope_val = slope[index]
-        ridigity = R[index]
-        result += slope_val * ff_base_appriximation(x, ridigity, prev_C, curr_C)
-        result_sloped += slope_val * ff_base_appriximation(0, ridigity, prev_C, curr_C)
-        prev_C = curr_C
-    return y_0 + result - result_sloped
+
+        # cur_slope_fcn += slope_val*ff_base_appriximation(x,left_r,right_r,left_c,right_c)
+        # # result += slope_val * ff_base_appriximation(x, ridigity, prev_C, curr_C)
+        # cur_slope_fcn_sloped += slope_val * ff_base_appriximation(0, left_r,right_r,left_c,right_c)
+
+        b = slope_val * ff_base_appriximation(x, left_r, right_r, left_c, right_c)
+        slope_fcn += b
+
+        fcn_bias += slope_val * ff_base_appriximation(
+            0, left_r, right_r, left_c, right_c
+        )
+        # else:
+        #     slope_func = tf_plus_inf(x, right_r, right_c)
+        #     slope_func_sloped = tf_plus_inf(0, right_r, right_c)
+        # cur_slope_fcn += slope_val * slope_func
+        # cur_slope_fcn_sloped += slope_val * slope_func_sloped
+        # prev_C = curr_C
+    return y_0 + slope_fcn - fcn_bias
 
 
-def get_number_parameter_by_number_crossovers(n: int) -> tuple[int, int]:
-    """Returns the number of slopes and rigidity parameters for a given number of crossovers.
+# def get_number_parameter_by_number_crossovers(n: int) -> tuple[int, int]:
+#     """Returns the number of slopes and rigidity parameters for a given number of crossovers.
 
-    Args:
-        n (int): The number of crossovers in the fluctuation function.
+#     Args:
+#         n (int): The number of crossovers in the fluctuation function.
 
-    Returns:
-        tuple[int, int]: A tuple containing the amount of slopes and the amount of rigidity (R) parameters.
-    """
-    slopes = n + 1
-    R = n + 1
-    return slopes, R
+#     Returns:
+#         tuple[int, int]: A tuple containing the amount of slopes and the amount of rigidity (R) parameters.
+#     """
+#     slopes = n + 1
+#     R = n
+#     return slopes, R
 
 
 def analyse_cross_ff(
@@ -83,10 +126,10 @@ def analyse_cross_ff(
     crossover_amount,
     max_ridigity: float = np.inf,
     min_ridigity: float = 1,
-    min_slope_current: float = 0,
-    max_slope_current: float = 5,
+    min_slope_current: float = 0.05,
+    max_slope_current: float = 50,
     ridigity_initial_parameter: float = 1,
-    slope_current_initial_parameter: float = 1,
+    slope_current_initial_parameter: float = 0.5,
 ) -> tuple[ff_params, np.ndarray]:
     """Approximates the fluctuation function with multiple Hurst coefficients using non-linear least squares.
 
@@ -114,7 +157,6 @@ def analyse_cross_ff(
     s = np.repeat(S[:, np.newaxis], hs.shape[0], 1).T
     change_cross_value = partial(cross_fcn_sloped, crossover_amount=crossover_amount)
     s_count, r_count = get_number_parameter_by_number_crossovers(crossover_amount)
-
     min_ridigity = [
         min_ridigity,
     ] * r_count
@@ -171,7 +213,7 @@ def analyse_cross_ff(
             bounds_max,
         ),
         full_output=True,
-        maxfev=6000,
+        maxfev=150009,
         nan_policy="raise",
     )
 
@@ -204,5 +246,5 @@ def analyse_cross_ff(
                 for v, e in zip(ridigity_values, ridigity_err)
             ],
         ),
-        10 ** change_cross_value(np.log10(s), *popt) - hs,
+        10 ** change_cross_value(np.log10(s), 0, *popt) - hs,
     )

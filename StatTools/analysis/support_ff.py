@@ -77,7 +77,9 @@ def tf_minus_inf(x: np.ndarray, R: int, C1: int) -> float:
     Returns:
         float: The return value of function with current values of x,C1 and R.
     """
-    return rev_f_fcn(x, R, C1)
+    # return rev_f_fcn(x, R, C1)
+    # return f_fcn(x, R, 0)-f_fcn(x, 1,C1)
+    return -f_fcn(x, R, C1) - rev_f_fcn(x, R, np.min(x))
 
 
 def tf_plus_inf(x: np.ndarray, R: int, C2: int) -> float:
@@ -91,11 +93,14 @@ def tf_plus_inf(x: np.ndarray, R: int, C2: int) -> float:
 
     Returns:
         float: The return value of function with current values of x,C2 and R.
-    """
-    return f_fcn(x, R, C2)
+    #"""
+    # return f_fcn(x, R, C2)
+    return -rev_f_fcn(x, R, C2)
 
 
-def ff_base_appriximation(x: np.ndarray, R: int, C1: int, C2: int) -> float:
+def ff_base_appriximation(
+    x: np.ndarray, r_left: int, r_right: int, c_left: int, c_right: int
+) -> float:
     """
     Function which can be used as base element for fluctuation characteristic approximation.
 
@@ -108,9 +113,9 @@ def ff_base_appriximation(x: np.ndarray, R: int, C1: int, C2: int) -> float:
     Returns:
         float: The return value of function with current values of x,C1,C2 and R.
     """
-    if C1 <= float("-inf"):
-        return tf_minus_inf(x, R, C1)
-    elif C2 >= float("inf"):
-        return tf_plus_inf(x, R, C2)
+    if np.isinf(c_left):
+        return tf_minus_inf(x, r_right, c_right)
+    elif np.isinf(c_right):
+        return tf_plus_inf(x, r_left, c_left)
 
-    return -f_fcn(x, R, C2) - rev_f_fcn(x, R, C1)
+    return f_fcn(x, r_left, c_left) + rev_f_fcn(x, r_right, c_right)

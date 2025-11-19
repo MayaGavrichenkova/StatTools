@@ -25,8 +25,8 @@ y_0 = 0
 cross = np.array([5, 50])
 cross_log = list(np.log10(cross))
 slope = [1.5, 1, 0.5]
-r = [1, 5, 1]
-all_values = list(np.log10((cross))) + slope + r
+r = [1, 2.7]
+all_values = cross_log + slope + r
 tst_h_multiple = 10 ** cross_fcn_sloped(
     np.log10(tst_s), y_0, *all_values, crossover_amount=len(cross)
 )
@@ -34,7 +34,7 @@ tst_h_multiple = 10 ** cross_fcn_sloped(
 
 cross_error = [0, 0]
 slope_error = [0, 0, 0]
-r_error = [0, 0, 0]
+r_error = [0, 0]
 
 cross_list = [
     var_estimation(value=10**v, stderr=e) for v, e in zip(cross_log, cross_error)
