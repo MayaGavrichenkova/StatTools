@@ -91,7 +91,7 @@ def tf_plus_inf(x: np.ndarray, R: int, C2: int) -> float:
 
     Returns:
         float: The return value of function with current values of x,C2 and R.
-    #"""
+    """
     return -rev_f_fcn(x, R, C2)
 
 
@@ -103,12 +103,13 @@ def ff_base_appriximation(
 
     Args:
         x(np.nadarray): points where fluctuation function F(s) is calculated in (+inference).
-        R(int): coefficient which is proportonal to sharpness (rigidity) of a DFA crossover.
-        C1(int): posititon of the crossover.
-        C2(int): position of the crossover.
+        r_left(int): coefficient which is proportonal to sharpness (rigidity) of a DFA crossover.
+        r_right(int): coefficient which is proportonal to sharpness (rigidity) of a DFA crossover.
+        c_left(int): posititon of the crossover.
+        c_right(int): position of the crossover.
 
     Returns:
-        float: The return value of function with current values of x,C1,C2 and R.
+        float: The return value of function with current values of x,r_left, r_right,c_left and c_right.
     """
     if np.isinf(c_left):
         return tf_minus_inf(x, r_right, c_right)

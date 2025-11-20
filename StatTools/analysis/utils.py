@@ -187,7 +187,7 @@ def analyse_cross_ff(
             bounds_max,
         ),
         full_output=True,
-        maxfev=150009,
+        maxfev=6000,
         nan_policy="raise",
     )
 
