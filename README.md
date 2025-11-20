@@ -183,6 +183,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTION.md) f
 - [Alexandr Kuzmenko](https://github.com/alexandr-1k)
 - [Aleksandr Sinitca](https://github.com/Sinitca-Aleksandr)
 - [Asya Lyanova](https://github.com/pipipyau)
+- [Maya Gavrichenkova](https://github.com/MayaGavrichenkova)
 
 ## License
 
@@ -192,14 +193,7 @@ This project is licensed under the terms specified in [LICENSE.txt](LICENSE.txt)
 
 If you use StatTools in your research, please cite:
 
-```bibtex
-@software{statttools,
-  title = {StatTools: A Python Library for Long-term Dependent Dataset Analysis},
-  author = {Kuzmenko, Alexandr and Sinitca, Aleksandr and Lyanova, Asya},
-  url = {https://github.com/Digiratory/StatTools},
-  version = {1.6.1}
-}
-```
+TBD
 
 ## Changelog
 
