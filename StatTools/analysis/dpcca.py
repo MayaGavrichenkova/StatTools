@@ -112,12 +112,9 @@ def dpcca_worker(
 
         Y = np.array([np.concatenate(Y[i]) for i in range(Y.shape[0])])
 
-        F_cov = _covariation(Y)
-        F[s_i] = F_cov
-        R_corr = _correlation(F_cov)
-        R[s_i] = R_corr
-        P_cross_corr = _cross_correlation(R_corr)
-        P[s_i] = P_cross_corr
+        F[s_i] = _covariation(Y)
+        R[s_i] = _correlation(F[s_i])
+        P[s_i] = _cross_correlation(R[s_i])
 
     return P, R, F
 
