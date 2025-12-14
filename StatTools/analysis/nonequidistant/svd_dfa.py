@@ -62,7 +62,6 @@ def _trajectory_matrix(y: np.ndarray, L: int) -> np.ndarray:
     n_signals, N = y.shape
     if not (2 <= L <= N):
         raise ValueError(f"L must be in [2, N], got L={L}, N={N}")
-    K = N - L + 1
     # sliding_window_view: (n_signals, K, L) -> transpose to (n_signals, L, K)
     Y = np.lib.stride_tricks.sliding_window_view(y, window_shape=L, axis=1)
     # Y shape: (n_signals, K, L)
@@ -227,11 +226,6 @@ def _dfa_fluctuation_worker(y: np.ndarray, n: int, m: int) -> np.ndarray:
     return F
 
 
-# ---------------------------
-# Public API: SVD-DFA
-# ---------------------------
-
-
 def svd_dfa(
     arr: np.ndarray,
     s: Union[int, Iterable[int]],
@@ -242,7 +236,6 @@ def svd_dfa(
     m: int = 1,
     n_min: int = 10,
     n_max: Optional[int] = None,
-    n_scales: int = 25,  # <-- ДОБАВЬ
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     SVD-DFA: returns the fluctuation function F(n) (no Hurst exponent estimation inside).
@@ -304,22 +297,9 @@ def svd_dfa(
             "Series is too short for DFA/SVD-DFA (need at least ~50 points)"
         )
 
-    if n_max is None:
-        n_max = N // 4
-
     # scales
     if isinstance(s, int):
         scales = np.array([s], dtype=int)
-    elif isinstance(s, range):
-        lo = max(2, n_min, s.start)
-        hi = min(n_max, s.stop - 1)
-        if hi <= lo:
-            raise ValueError(f"Invalid scale range: lo={lo}, hi={hi}")
-        scales = np.unique(
-            np.round(np.logspace(np.log10(lo), np.log10(hi), num=int(n_scales))).astype(
-                int
-            )
-        )
     else:
         scales = np.array(list(s), dtype=int)
 

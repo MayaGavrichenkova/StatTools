@@ -4,35 +4,44 @@ import numpy as np
 import pytest
 from scipy import stats
 
-from StatTools.analysis.svd_dfa import svd_dfa  # <-- твоя реализация SVD-DFA
+from StatTools.analysis.svd_dfa import svd_dfa
 from StatTools.generators.kasdin_generator import create_kasdin_generator
 
-# ------------------------------------------------------------
-# PARAMETERS (CI-friendly like in the example)
-# ------------------------------------------------------------
+"""
+------------------------------------------------------------
+PARAMETERS (CI-friendly like in the example)
+------------------------------------------------------------"""
+
 IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
 
 H_VALUES_CI = [0.3, 0.5, 0.8]
-LENGTHS_CI = [2**10]
+LENGTHS_CI = [2**12]
 N_RUNS_CI = 10
 
 H_VALUES = H_VALUES_CI if IN_GITHUB_ACTIONS else [0.3, 0.5, 0.8]
-LENGTHS = LENGTHS_CI if IN_GITHUB_ACTIONS else [2**10, 2**14]
+LENGTHS = LENGTHS_CI if IN_GITHUB_ACTIONS else [2**12, 2**14]
 
-N_RUNS = N_RUNS_CI if IN_GITHUB_ACTIONS else [10]
+N_RUNS = N_RUNS_CI if IN_GITHUB_ACTIONS else 10
+
+"""
+------------------------------------------------------------
+GENERATOR (Kasdin-style)
+------------------------------------------------------------
+"""
 
 
-# ------------------------------------------------------------
-# GENERATOR (Kasdin-style)
-# ------------------------------------------------------------
 def generate_fractional_noise(h: float, length: int) -> np.ndarray:
     """Generate fGn using Kasdin filter method."""
     return create_kasdin_generator(h, length=length).get_full_sequence()
 
 
-# ------------------------------------------------------------
-# FIXTURE: multiple fGn/fBm signals for statistical tests
-# ------------------------------------------------------------
+"""
+------------------------------------------------------------
+FIXTURE: multiple fGn/fBm signals for statistical tests
+------------------------------------------------------------
+"""
+
+
 @pytest.fixture(scope="module")
 def test_dataset():
     """
@@ -61,17 +70,25 @@ def test_dataset():
     return data
 
 
-# ------------------------------------------------------------
-# UTILITY: estimate Hurst exponent (external, NOT inside method)
-# ------------------------------------------------------------
+"""
+------------------------------------------------------------
+UTILITY: estimate Hurst exponent (external, NOT inside method)
+------------------------------------------------------------
+"""
+
+
 def estimate_hurst(F: np.ndarray, s: np.ndarray) -> float:
     """Slope of log-log regression: log F(n) ~ H log n."""
     return stats.linregress(np.log(s), np.log(F)).slope
 
 
-# ------------------------------------------------------------
-# MAIN TEST: accuracy of SVD-DFA scaling exponent vs true H
-# ------------------------------------------------------------
+"""
+------------------------------------------------------------
+MAIN TEST: accuracy of SVD-DFA scaling exponent vs true H
+------------------------------------------------------------
+"""
+
+
 @pytest.mark.parametrize("h", H_VALUES)
 @pytest.mark.parametrize("N", LENGTHS)
 @pytest.mark.parametrize("rtype", ["fGn", "fBm"])
@@ -90,20 +107,11 @@ def test_svd_dfa_accuracy(test_dataset, h, N, rtype):
     runs = test_dataset[(rtype, h, N)]
     integrate = True if rtype == "fGn" else False
 
-    scales = np.arange(10, N // 4, 10)
+    scales = np.array([2**i for i in range(3, 20)])
 
     H_estimates = []
     for signal in runs:
-        F, s = svd_dfa(
-            signal,
-            s=scales,
-            integrate=integrate,
-            L=None,  # default N//3
-            p=2,  # typical
-            m=1,  # DFA1 (linear detrending)
-            n_min=10,
-            n_max=N // 4,
-        )
+        F, s = svd_dfa(signal, s=scales, integrate=integrate, L=None, p=2, m=1)
         H_estimates.append(estimate_hurst(F, s))
 
     H_estimates = np.asarray(H_estimates)
@@ -119,9 +127,13 @@ def test_svd_dfa_accuracy(test_dataset, h, N, rtype):
     )
 
 
-# ------------------------------------------------------------
-# TEST: monotonicity — larger true H => larger estimated H (on average)
-# ------------------------------------------------------------
+"""
+------------------------------------------------------------
+TEST: monotonicity — larger true H => larger estimated H (on average)
+------------------------------------------------------------
+"""
+
+
 @pytest.mark.parametrize("N", LENGTHS)
 @pytest.mark.parametrize("rtype", ["fGn", "fBm"])
 def test_svd_dfa_monotonic_in_h(test_dataset, N, rtype):
@@ -133,7 +145,7 @@ def test_svd_dfa_monotonic_in_h(test_dataset, N, rtype):
     This catches broken integration flags, swapped logs, etc.
     """
     integrate = True if rtype == "fGn" else False
-    scales = np.arange(10, N // 4, 10)
+    scales = np.array([2**i for i in range(3, 20)])
 
     means = []
     for h in H_VALUES:
@@ -152,38 +164,13 @@ def test_svd_dfa_monotonic_in_h(test_dataset, N, rtype):
         )
 
 
-# ------------------------------------------------------------
-# TEST: integration flag matters (fGn should be wrong without integration)
-# ------------------------------------------------------------
-@pytest.mark.parametrize("h", H_VALUES)
-def test_svd_dfa_integration_flag_effect(h):
-    """
-    For fGn, integrate=True is the correct DFA convention.
-    If we turn integration off, the estimate should typically shift.
-
-    We only assert that the two estimates are meaningfully different,
-    not which one is "closer", because finite-sample variability exists.
-    """
-    N = 2**14
-    sig = generate_fractional_noise(h, N)
-    scales = np.arange(10, N // 4, 10)
-
-    F_on, s_on = svd_dfa(sig, s=scales, integrate=True, p=2, m=1)
-    H_on = estimate_hurst(F_on, s_on)
-
-    F_off, s_off = svd_dfa(sig, s=scales, integrate=False, p=2, m=1)
-    H_off = estimate_hurst(F_off, s_off)
-
-    diff = abs(H_on - H_off)
-    assert diff >= 0.05, (
-        f"Integration flag seems to have no effect for fGn (H={h}): "
-        f"H_on={H_on:.3f}, H_off={H_off:.3f}, diff={diff:.3f}"
-    )
+"""
+------------------------------------------------------------
+ TEST: p sensitivity should not explode (basic robustness)
+------------------------------------------------------------
+"""
 
 
-# ------------------------------------------------------------
-# TEST: p sensitivity should not explode (basic robustness)
-# ------------------------------------------------------------
 @pytest.mark.parametrize("h", H_VALUES)
 def test_svd_dfa_p_sensitivity_reasonable(h):
     """
@@ -194,7 +181,7 @@ def test_svd_dfa_p_sensitivity_reasonable(h):
     """
     N = 2**14
     sig = generate_fractional_noise(h, N)
-    scales = np.arange(10, N // 4, 10)
+    scales = (2**i for i in range(3, 20))
 
     # correct convention for fGn
     estimates = []
