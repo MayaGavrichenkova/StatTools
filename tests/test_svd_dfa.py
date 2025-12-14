@@ -181,7 +181,7 @@ def test_svd_dfa_p_sensitivity_reasonable(h):
     """
     N = 2**14
     sig = generate_fractional_noise(h, N)
-    scales = (2**i for i in range(3, 20))
+    scales = np.array([2**i for i in range(3, 20)])
 
     # correct convention for fGn
     estimates = []
