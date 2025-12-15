@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from StatTools.analysis.dfa import DFA
-from StatTools.generators.ndfnoise_generator import ndfnoise, ndfnoise_optimized
+from StatTools.generators.ndfnoise_generator import ndfnoise
 
 IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
 if IN_GITHUB_ACTIONS:
@@ -47,7 +47,7 @@ def test_ndfnoise_generator_2d(hurst_theory: float, rate: int):
     size = 2**rate
     dim = 2
     shape = (size,) * dim
-    f = ndfnoise_optimized(shape, hurst_theory, normalize=True)
+    f = ndfnoise(shape, hurst_theory, normalize=True)
     hurst_est_array = get_h_dfa_sliced(np.diff(f))
     hurst_mean = np.mean(hurst_est_array)
     assert np.isclose(
