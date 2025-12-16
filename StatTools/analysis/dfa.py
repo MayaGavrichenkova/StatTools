@@ -54,6 +54,60 @@ def bar_manager(description, total, counter, lock, mode="total", stop_bit=None):
         except TqdmWarning:
             return None
 
+def dfa_core_cycle_func(dataset, degree, root):
+    """
+            Core DFA algorithm implementation.
+
+            Computes the fluctuation function F(s) for different time scales s by:
+            1. Integrating the time series to get cumulative sum Y(i)
+            2. Dividing Y(i) into segments of length s
+            3. Fitting polynomial of degree 'degree' to each segment
+            4. Computing RMS fluctuation F(s) of detrended segments
+            5. Repeating for different scales s
+
+            Args:
+                dataset (numpy.ndarray): Input time series
+                degree (int): Polynomial degree for detrending
+                root (bool): Use root fluctuations if True
+
+            Returns:
+                tuple: (s_values, F_s_values) where:
+                    - s_values: Array of scale values (log-spaced)
+                    - F_s_values: Corresponding fluctuation function values
+            """
+    data_mean = numpy.mean(dataset)
+    data = dataset - data_mean
+    Y_cumsum = numpy.cumsum(data)
+
+    s_max = int(len(data) / 4)
+
+    log_s_max = numpy.arange(1.6, numpy.log(s_max), 0.5)
+
+    x_Axis = []
+    y_Axis = []
+
+    for step in log_s_max:
+        s = numpy.linspace(1, floor(exp(step)), floor(exp(step)), dtype=int)
+        cycles_amount = floor(len(data) / len(s))
+
+        F_q_s_sum = 0
+        for i in range(1, cycles_amount):
+            indices = numpy.array((s - (i + 0.5) * len(s)), dtype=int)
+            Y_cumsum_s = numpy.take(Y_cumsum, s)
+
+            coef = numpy.polyfit(indices, Y_cumsum_s, deg=degree)
+            current_trend = numpy.polyval(coef, indices)
+            F_2 = sum(pow((Y_cumsum_s - current_trend), 2)) / len(s)
+            F_q_s_sum += pow(F_2, (degree / 2))
+            s += floor(exp(step))
+
+        F1 = pow(((1 / cycles_amount) * F_q_s_sum), 1 / degree)
+        x_Axis.append(numpy.log(floor(exp(step))))
+        if root:
+            y_Axis.append(numpy.log(F1 / numpy.sqrt(len(s))))
+        else:
+            y_Axis.append(numpy.log(F1))
+    return numpy.array(x_Axis), numpy.array(y_Axis)
 
 class DFA:
     """
@@ -194,60 +248,8 @@ class DFA:
 
     @staticmethod
     def dfa_core_cycle(dataset, degree, root):
-        """
-        Core DFA algorithm implementation.
 
-        Computes the fluctuation function F(s) for different time scales s by:
-        1. Integrating the time series to get cumulative sum Y(i)
-        2. Dividing Y(i) into segments of length s
-        3. Fitting polynomial of degree 'degree' to each segment
-        4. Computing RMS fluctuation F(s) of detrended segments
-        5. Repeating for different scales s
-
-        Args:
-            dataset (numpy.ndarray): Input time series
-            degree (int): Polynomial degree for detrending
-            root (bool): Use root fluctuations if True
-
-        Returns:
-            tuple: (s_values, F_s_values) where:
-                - s_values: Array of scale values (log-spaced)
-                - F_s_values: Corresponding fluctuation function values
-        """
-        data_mean = numpy.mean(dataset)
-        data = dataset - data_mean
-        Y_cumsum = numpy.cumsum(data)
-
-        s_max = int(len(data) / 4)
-
-        log_s_max = numpy.arange(1.6, numpy.log(s_max), 0.5)
-
-        x_Axis = []
-        y_Axis = []
-
-        for step in log_s_max:
-            s = numpy.linspace(1, floor(exp(step)), floor(exp(step)), dtype=int)
-            cycles_amount = floor(len(data) / len(s))
-
-            F_q_s_sum = 0
-            for i in range(1, cycles_amount):
-                indices = numpy.array((s - (i + 0.5) * len(s)), dtype=int)
-                Y_cumsum_s = numpy.take(Y_cumsum, s)
-
-                coef = numpy.polyfit(indices, Y_cumsum_s, deg=degree)
-                current_trend = numpy.polyval(coef, indices)
-                F_2 = sum(pow((Y_cumsum_s - current_trend), 2)) / len(s)
-                F_q_s_sum += pow(F_2, (degree / 2))
-                s += floor(exp(step))
-
-            F1 = pow(((1 / cycles_amount) * F_q_s_sum), 1 / degree)
-            x_Axis.append(numpy.log(floor(exp(step))))
-            if root:
-                y_Axis.append(numpy.log(F1 / numpy.sqrt(len(s))))
-            else:
-                y_Axis.append(numpy.log(F1))
-
-        return numpy.array(x_Axis), numpy.array(y_Axis)
+        return dfa_core_cycle_func(dataset, degree, root)
 
     def find_h(self, simple_mode=True):
         """
