@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from StatTools.analysis.utils import analyse_zero_cross_ff
-from StatTools.visualization.ff_plot import plot_ff
+from StatTools.visualization.ff_plot import ff_plot
 
 tst_s = np.array(
     [0.01, 0.1, 0.3, 0.5, 1, 1.5, 2.5, 5, 7.5, 10, 15, 20, 50, 100, 250, 500, 1000]
@@ -36,7 +36,7 @@ fig, axs = plt.subplots()
 ff_parameters_approx, residuals_approx = analyse_zero_cross_ff(tst_h_multiple, tst_s)
 
 
-plot_ff(
+ff_plot(
     tst_h_multiple,
     tst_s,
     ff_parameter=ff_parameters_approx,

@@ -229,6 +229,19 @@ def analyse_zero_cross_ff(
     hs: np.ndarray,
     S: np.ndarray,
 ) -> tuple[ff_params, np.ndarray]:
+    """Approximates the fluctuation function with one Hurst coefficient using linear least squares regression.
+
+    This function fits a model with zero crossover points to the fluctuation function data. It returns the fitted parameters with their
+    standard errors and the residuals of the fit.
+
+    Args:
+        hs (np.ndarray): The dependent data array, length M.
+        S (np.ndarray): The independent variable array, shape (k, M).
+    Returns:
+        tuple[ff_params, np.ndarray]: A tuple containing the fitted parameters as an ff_params dataclass
+        instance and the residuals as a numpy array.
+    """
+
     s = np.repeat(S[np.newaxis, :], hs.shape[0], axis=0)
     log_s = np.log10(s)
     log_hs = np.log10(hs)

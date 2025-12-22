@@ -6,7 +6,7 @@ import numpy as np
 from StatTools.analysis.utils import analyse_cross_ff, cross_fcn_sloped, ff_params
 
 
-def plot_ff(
+def ff_plot(
     hs: np.ndarray,
     S: np.ndarray,
     ff_parameter: ff_params,
@@ -14,7 +14,7 @@ def plot_ff(
     ax=None,
     title=None,
 ):
-    """Plots the fluctuation function with fitted parameters and crossover points.
+    """Plots the fluctuation function with fitted parameters and crossover points and zero crossover points.
 
     This function visualizes the fluctuation function data along with the fitted model,
     including error bars if residuals are provided, and marks the crossover points.
@@ -93,15 +93,15 @@ def plot_ff(
 
         S_new = np.repeat(S[:, np.newaxis], hs.shape[0], 1).T
         array_for_limits = [-np.inf] + list(crossovers) + [+np.inf]
-        for plot_value in range(len(slopes)):
-            current_lim = array_for_limits[plot_value]
-            next_lim = array_for_limits[plot_value + 1]
+        for index_value, plot_value in enumerate(slopes):
+            current_lim = array_for_limits[index_value]
+            next_lim = array_for_limits[index_value + 1]
             mask = (S_new > current_lim) & (S_new <= next_lim)
             ax.plot(
                 S_new[mask],
                 hs[mask],
                 ".",
-                label=rf"$H_0(S) \sim {slopes[plot_value]:.2f} \cdot S$",
+                label=rf"$H_0(S) \sim {slopes[index_value]:.2f} \cdot S$",
             )
 
         for c in ff_parameter.cross:
