@@ -1,6 +1,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
+#include <cstring> // For memcpy
 #include "StatTools_core.h"
 
 namespace py = pybind11;
@@ -48,7 +49,10 @@ PYBIND11_MODULE(StatTools_bindings, m) {
     m.def("cumsum", [](py::array_t<double> input_vector) {
         std::vector<double> input_vec(input_vector.data(), input_vector.data() + input_vector.size());
         std::vector<double> result = cumsum(input_vec);
-        return py::array_t<double>(result.size(), result.data(), py::none());
+        // Create a new numpy array with copied data to avoid memory issues
+        py::array_t<double> output = py::array_t<double>(result.size());
+        std::memcpy(output.mutable_data(), result.data(), result.size() * sizeof(double));
+        return output;
     }, "Compute cumulative sum of input vector", py::arg("input_vector"));
 
     m.def("model", [](py::array_t<double> input_vector, py::array_t<double> U, double C0_global) {
