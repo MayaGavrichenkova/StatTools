@@ -14,7 +14,7 @@ pybind11_include = pybind11.get_include()
 c_api_module = Extension(
     "StatTools.native.C_StatTools",
     include_dirs=[get_include()],
-    sources=["src/cpp/StatTools_C_API.cpp"],
+    sources=["src/cpp/StatTools_C_API.cpp", "src/cpp/StatTools_core.cpp"],
     language="c++",
 )
 
@@ -22,7 +22,7 @@ c_api_module = Extension(
 stattools_bindings = Extension(
     "StatTools.native.StatTools_bindings",
     include_dirs=[get_include(), pybind11_include],
-    sources=["src/cpp/StatTools_bindings.cpp"],
+    sources=["src/cpp/StatTools_bindings.cpp", "src/cpp/StatTools_core.cpp"],
     language="c++",
 )
 
