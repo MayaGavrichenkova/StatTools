@@ -13,6 +13,16 @@ except ImportError:
     C_StatTools = None
     StatTools_bindings = None
 
+# Mark C_StatTools as deprecated by wrapping it
+from .utilities.deprecation import DeprecatedWrapper
+
+if C_StatTools is not None:
+    C_StatTools = DeprecatedWrapper(
+        C_StatTools,
+        "C_StatTools is deprecated and will be removed in version 2.0.0. "
+        "Please use the Python-native implementations instead.",
+    )
+
 # Make key functions available directly from StatTools
 if StatTools_bindings is not None:
     # Core functionality
