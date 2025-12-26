@@ -26,8 +26,6 @@ stattools_bindings = Extension(
     language="c++",
 )
 
-requirements = [line.strip() for line in open("requirements.txt").readlines()]
-
 setup(
     ext_modules=[
         c_api_module,
@@ -43,6 +41,5 @@ setup(
         "StatTools.filters",
     ],
     include_package_data=True,
-    install_requires=requirements,
     description="A set of tools which allows to generate and process long-term dependent datasets",
 )
