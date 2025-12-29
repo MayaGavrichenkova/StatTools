@@ -1,11 +1,7 @@
-import os
-
 import pybind11
-import pybind11.setup_helpers
 from numpy import get_include
-from pybind11.setup_helpers import Pybind11Extension, build_ext
+from pybind11.setup_helpers import build_ext
 from setuptools import Extension, setup
-from setuptools.command.build_ext import build_ext as _build_ext
 
 # Find pybind11 include directory
 pybind11_include = pybind11.get_include()
