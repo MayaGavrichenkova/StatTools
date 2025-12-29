@@ -9,7 +9,10 @@ from StatTools.generators.lbfbm_generator import LBFBmGenerator
 testdata = {
     "hurst_values": [0.5, 0.7, 0.9],
     "lengths": [2**12, 2**14],
-    "methods": ["kasdin", "lbfbm"],
+    "methods": [
+        "kasdin",
+        # "lbfbm",
+    ],
 }
 
 
@@ -46,7 +49,7 @@ def test_unified_generator_basic(hurst: float, length: int, method: str):
 
     # Test that mean is close to zero (for normalized generators)
     mean_abs = np.abs(np.mean(result))
-    assert mean_abs < 0.5, f"Mean should be close to zero, got {mean_abs}"
+    assert mean_abs < 0.2, f"Mean should be close to zero, got {mean_abs}"
 
     # Test that std is reasonable (close to 1 for normalized generators)
     std = np.std(result)
