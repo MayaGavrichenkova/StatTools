@@ -6,7 +6,7 @@ import numpy as np
 from StatTools.analysis.utils import analyse_cross_ff, cross_fcn_sloped, ff_params
 
 
-def ff_plot(
+def plot_ff(
     hs: np.ndarray,
     S: np.ndarray,
     ff_parameter: ff_params,
@@ -41,17 +41,6 @@ def ff_plot(
         b = ff_parameter.intercept.value
         hs_array = np.asarray(hs)
         fit_func = 10 ** (hurst * np.log10(S) + b)
-        if residuals is not None:
-            ax.errorbar(
-                S,
-                fit_func,
-                fmt="g--",
-                capsize=7,
-                yerr=2 * np.std(residuals, axis=0),
-                label=r"$F(S) \pm 2\sigma$",
-            )
-        else:
-            ax.plot(S, fit_func, label=r"$F(S)")
         if hs_array.ndim == 1:
             ax.plot(S, hs_array, ".", label=rf"$H_0(S) \sim {hurst:.2f} \cdot S$")
         else:
@@ -62,15 +51,7 @@ def ff_plot(
                 ".",
                 label=rf"$H_0(S) \sim {hurst:.2f} \cdot S$",
             )
-        ax.set_xscale("log")
-        ax.set_yscale("log")
-        ax.grid(which="both")
-        ax.legend()
-        if title:
-            ax.set_title(title)
-
     else:
-
         all_values = [np.log10(c) for c in crossovers] + slopes + R
         fit_func = 10 ** cross_fcn_sloped(
             np.log10(S),
@@ -78,19 +59,6 @@ def ff_plot(
             *all_values,
             crossover_amount=len(crossovers),
         )
-
-        if residuals is not None:
-            ax.errorbar(
-                S,
-                fit_func,
-                fmt="g--",
-                capsize=7,
-                yerr=2 * np.std(residuals, axis=0),
-                label=r"$F(S) \pm 2\sigma$",
-            )
-        else:
-            ax.plot(S, fit_func, label=r"$F(S)")
-
         S_new = np.repeat(S[:, np.newaxis], hs.shape[0], 1).T
         array_for_limits = [-np.inf] + list(crossovers) + [+np.inf]
         for index_value, plot_value in enumerate(slopes):
@@ -108,9 +76,22 @@ def ff_plot(
             ax.axvline(
                 c.value, color="k", linestyle="--", label=f"Cross at $S={c.value:.2f}$"
             )
-        ax.set_xscale("log")
-        ax.set_yscale("log")
-        ax.grid(which="both")
-        ax.legend()
+    if residuals is not None:
+        ax.errorbar(
+            S,
+            fit_func,
+            fmt="g--",
+            capsize=7,
+            yerr=2 * np.std(residuals, axis=0),
+            label=r"$F(S) \pm 2\sigma$",
+        )
+    else:
+        ax.plot(S, fit_func, label=r"$F(S)")
+    if title:
+        ax.set_title(title)
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.grid(which="both")
+    ax.legend()
 
     return ax
