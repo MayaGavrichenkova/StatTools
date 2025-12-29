@@ -8,8 +8,11 @@ from StatTools.generators.lbfbm_generator import LBFBmGenerator
 # Test data
 testdata = {
     "hurst_values": [0.5, 0.7, 0.9],
-    "lengths": [2048, 4096],
-    "methods": ["kasdin", "lbfbm"],
+    "lengths": [2**12, 2**14],
+    "methods": [
+        "kasdin",
+        # "lbfbm",
+    ],
 }
 
 

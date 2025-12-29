@@ -4,10 +4,10 @@ from math import floor
 from random import gauss
 from typing import Optional
 
-from C_StatTools import fbm_core
 from numpy import array, max, min, ndarray, uint8, zeros
 from numpy.random import randn
 
+from StatTools import StatTools_bindings
 from StatTools.auxiliary import SharedBuffer
 
 
@@ -179,7 +179,7 @@ def fb_motion(
     if filter_mine is None:
         n = 2**field_size + 1
         zeros_arr = zeros((n, n), dtype=float)
-        fbm_core(zeros_arr, h, field_size)
+        StatTools_bindings.fbm_core(zeros_arr, h, field_size)
         return zeros_arr.astype(uint8)
     else:
         print("HERE")
@@ -190,7 +190,7 @@ def fb_motion(
             raise ValueError(
                 "2^degree > input array shape. You either use less or equal."
             )
-        fbm_core(filter_mine, h, field_size)
+        StatTools_bindings.fbm_core(filter_mine, h, field_size)
         return filter_mine.astype(uint8)
 
 
