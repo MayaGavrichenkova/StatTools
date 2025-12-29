@@ -9,15 +9,13 @@ from StatTools.generators.kasdin_generator import create_kasdin_generator
 
 IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
 
-H_VALUES_CI = [0.3, 0.5, 0.8]
-N_CI = 2**13
-N_RUNS_CI = 1
-N_MAX_CI = 2**13
+H_VALUES = [0.3, 0.5, 0.75, 0.9]
+N_LEN = 2**13
+N_RUNS = 3
 
-H_VALUES = H_VALUES_CI if IN_GITHUB_ACTIONS else [0.3, 0.5, 0.8]
-N_LEN = N_CI if IN_GITHUB_ACTIONS else 2**16
-N_RUNS = N_RUNS_CI if IN_GITHUB_ACTIONS else 1
-N_MAX = N_MAX_CI
+if IN_GITHUB_ACTIONS:
+    H_VALUES = [0.3, 0.5, 0.8]
+    N_RUNS = 1
 
 """
 ------------------------------------------------------------
@@ -137,8 +135,7 @@ def test_svd_dfa_p_sensitivity_reasonable(h):
 
     This catches mistakes like removing all components or wrong reconstruction.
     """
-    N = N_MAX
-    sig = generate_fractional_noise(h, N)
+    sig = generate_fractional_noise(h, N_LEN)
     scales = np.array([2**i for i in range(3, 20)])
 
     # correct convention for fGn
