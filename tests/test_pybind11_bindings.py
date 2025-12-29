@@ -68,11 +68,31 @@ class TestPybind11Bindings:
         if not NEW_API_AVAILABLE:
             pytest.skip("New API not available")
 
-        # Test single value generation
-        result = StatTools_bindings.get_gauss_dist_value()
-        assert isinstance(result, float)
-        # Should be approximately normal(0,1), so values should be in reasonable range
-        assert -4 < result < 4
+        # Generate 50 values and test statistical properties
+        values = [StatTools_bindings.get_gauss_dist_value() for _ in range(100)]
+
+        # All values should be floats
+        assert all(isinstance(x, float) for x in values)
+
+        # Test for normality using Shapiro-Wilk test
+        # Null hypothesis: the sample comes from a normal distribution
+        # We want to fail to reject the null hypothesis (p-value > 0.05)
+        from scipy.stats import shapiro
+
+        stat, p_value = shapiro(values)
+        assert (
+            p_value > 0.05
+        ), f"Values do not appear to be normally distributed (p-value: {p_value:.4f})"
+
+        # Calculate mean and standard deviation
+        sample_mean = np.mean(values)
+        sample_std = np.std(values, ddof=1)  # Sample standard deviation
+
+        # For standard normal distribution, mean should be close to 0
+        # and std should be close to 1
+        # Using reasonable tolerances for statistical testing
+        assert_allclose(sample_mean, 0.0, atol=0.3)  # Allow 0.3 tolerance for mean
+        assert_allclose(sample_std, 1.0, atol=0.2)  # Allow 0.2 tolerance for std
 
     def test_cumulative_sum(self, sample_data):
         """Test cumulative sum functionality"""
